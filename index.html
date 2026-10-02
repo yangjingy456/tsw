@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>临床医学院学习资料管理</title>
+    <style>
+      :root {
+        --bg1: #eef6ff;
+        --bg2: #ecfdf5;
+        --primary: #1d7af2;
+        --primary-deep: #0e4fb8;
+        --accent: #28b67a;
+        --text: #183153;
+        --muted: #66768e;
+        --card: rgba(255, 255, 255, 0.8);
+        --line: rgba(24, 49, 83, 0.08);
+        --shadow: 0 20px 45px rgba(20, 60, 120, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        margin: 0;
+        font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+        background: linear-gradient(135deg, var(--bg1), var(--bg2));
+        color: var(--text);
+      }
+
+      a { text-decoration: none; }
+
+      .container {
+        width: min(1200px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        backdrop-filter: blur(16px);
+        background: rgba(255, 255, 255, 0.6);
+        border-bottom: 1px solid rgba(17, 45, 80, 0.06);
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 72px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        font-size: 1.08rem;
+      }
+
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        color: white;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--primary), #6ea7ff);
+        box-shadow: 0 12px 20px rgba(29, 122, 242, 0.25);
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 24px;
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+
+      .nav-links a:hover { color: var(--primary); }
+
+      .search-launch {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 210px;
+        padding: 10px 14px;
+        border: 1px solid rgba(17, 45, 80, 0.1);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.82);
+        color: var(--muted);
+        cursor: pointer;
+        font: inherit;
+        text-align: left;
+      }
+
+      .search-launch kbd {
+        margin-left: auto;
+        padding: 2px 6px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: white;
+        font-size: 0.72rem;
+      }
+
+      .search-section { padding: 10px 0 36px; }
+
+      .search-box {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid rgba(29, 122, 242, 0.14);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: 0 14px 32px rgba(20, 60, 120, 0.08);
+      }
+
+      .search-icon { padding: 0 4px 0 8px; font-size: 1.25rem; }
+
+      .search-box input {
+        width: 100%;
+        min-width: 0;
+        padding: 10px 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+      }
+
+      .search-results {
+        display: none;
+        margin-top: 12px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 12px 28px rgba(20, 60, 120, 0.06);
+      }
+
+      .search-results.visible { display: block; }
+      .search-results h3 { margin: 0 0 10px; font-size: 1rem; }
+      .search-result-list { display: grid; gap: 8px; }
+
+      .search-result {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #f8fbff;
+        color: var(--text);
+        cursor: pointer;
+        font: inherit;
+        text-align: left;
+      }
+
+      .search-result:hover { border-color: rgba(29, 122, 242, 0.35); }
+      .result-type { flex: 0 0 auto; color: var(--primary-deep); font-size: 0.82rem; }
+
+      .discover-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 24px;
+        margin-bottom: 22px;
+      }
+
+      .discover-hero h2 { margin: 0 0 8px; font-size: clamp(1.7rem, 3vw, 2.35rem); }
+      .discover-hero p { margin: 0; color: var(--muted); line-height: 1.7; }
+      .discover-count { color: var(--primary-deep); font-weight: 800; white-space: nowrap; }
+
+      .discover-filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+
+      .filter-chip {
+        padding: 9px 14px;
+        border: 1px solid rgba(17, 45, 80, 0.09);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.75);
+        color: var(--muted);
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.88rem;
+      }
+
+      .filter-chip.active {
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--primary), #5e9eff);
+        color: white;
+        box-shadow: 0 8px 18px rgba(29, 122, 242, 0.18);
+      }
+
+      .discover-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .discover-card {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: 0 12px 28px rgba(20, 60, 120, 0.07);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .discover-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+
+      .discover-cover {
+        min-height: 118px;
+        display: flex;
+        align-items: end;
+        padding: 18px;
+        color: white;
+        font-size: 2.2rem;
+      }
+
+      .discover-cover.blue { background: linear-gradient(135deg, #2563eb, #60a5fa); }
+      .discover-cover.green { background: linear-gradient(135deg, #059669, #34d399); }
+      .discover-cover.purple { background: linear-gradient(135deg, #7c3aed, #c084fc); }
+      .discover-cover.orange { background: linear-gradient(135deg, #ea580c, #fb923c); }
+      .discover-cover.pink { background: linear-gradient(135deg, #db2777, #f472b6); }
+      .discover-cover.teal { background: linear-gradient(135deg, #0e7490, #22d3ee); }
+
+      .discover-content { padding: 18px; }
+      .discover-category { color: var(--primary-deep); font-size: 0.78rem; font-weight: 800; }
+      .discover-content h3 { margin: 7px 0; font-size: 1.12rem; }
+      .discover-content > p { min-height: 50px; margin: 0; color: var(--muted); line-height: 1.65; font-size: 0.9rem; }
+      .discover-tags { display: flex; flex-wrap: wrap; gap: 7px; margin: 13px 0; }
+      .discover-tag { padding: 5px 9px; border-radius: 999px; background: #f0f5ff; color: #486184; font-size: 0.75rem; }
+      .discover-detail { margin: 12px 0; padding: 12px; border-radius: 12px; background: #f4fbf8; color: #376554; font-size: 0.86rem; line-height: 1.65; }
+      .discover-detail[hidden] { display: none; }
+      .discover-empty { grid-column: 1 / -1; padding: 32px; border: 1px dashed rgba(29, 122, 242, 0.24); border-radius: 18px; color: var(--muted); text-align: center; }
+      .file-item[hidden] { display: none; }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: none;
+        border-radius: 14px;
+        padding: 14px 22px;
+        cursor: pointer;
+        font-size: 0.98rem;
+        font-weight: 700;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary), #5e9eff);
+        color: white;
+        box-shadow: 0 14px 24px rgba(29, 122, 242, 0.18);
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.75);
+        color: var(--text);
+        border: 1px solid rgba(17, 45, 80, 0.07);
+      }
+
+      .hero {
+        padding: 72px 0 36px;
+      }
+
+      .hero-shell {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 30px;
+        align-items: center;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(29, 122, 242, 0.08);
+        color: var(--primary-deep);
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 18px 0 18px;
+        font-size: clamp(2.3rem, 4vw, 4.2rem);
+        line-height: 1.08;
+        letter-spacing: -0.06em;
+      }
+
+      .subtitle {
+        margin: 0 0 26px;
+        max-width: 640px;
+        line-height: 1.8;
+        font-size: 1.04rem;
+        color: var(--muted);
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 28px;
+      }
+
+      .mini-stats {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .mini-stat {
+        min-width: 150px;
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 8px 20px rgba(18, 48, 90, 0.05);
+      }
+
+      .mini-stat strong {
+        display: block;
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+      }
+
+      .mini-stat span {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .hero-panel {
+        background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.68));
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+      }
+
+      .panel-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .dot-group {
+        display: flex;
+        gap: 8px;
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .dot.red { background: #ff6d7a; }
+      .dot.yellow { background: #ffb454; }
+      .dot.green { background: #3cc88f; }
+
+      .mock-window {
+        background: linear-gradient(180deg, rgba(16, 39, 78, 0.04), rgba(16, 39, 78, 0.02));
+        border: 1px solid rgba(17, 45, 80, 0.06);
+        border-radius: 18px;
+        padding: 20px;
+      }
+
+      .mock-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 14px 12px;
+        border-radius: 12px;
+        background: white;
+        border: 1px solid rgba(17, 45, 80, 0.04);
+        margin-bottom: 12px;
+      }
+
+      .mock-item:last-child { margin-bottom: 0; }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(40, 182, 122, 0.12);
+        color: #127b59;
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+
+      .section {
+        padding: 16px 0 40px;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 28px 22px;
+        box-shadow: 0 12px 28px rgba(20, 60, 120, 0.06);
+      }
+
+      .icon-box {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        font-size: 1.4rem;
+        margin-bottom: 18px;
+        background: linear-gradient(135deg, rgba(29,122,242,0.12), rgba(40,182,122,0.12));
+      }
+
+      .card h3 {
+        margin: 0 0 10px;
+        font-size: 1.15rem;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.75;
+        font-size: 0.95rem;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 24px;
+        margin-top: 20px;
+      }
+
+      .panel {
+        background: rgba(255,255,255,0.78);
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        padding: 24px;
+        box-shadow: 0 16px 32px rgba(15, 44, 96, 0.06);
+      }
+
+      .panel h2 {
+        margin: 0 0 18px;
+        font-size: 1.45rem;
+      }
+
+      .upload-area {
+        border: 2px dashed rgba(29, 122, 242, 0.38);
+        background: linear-gradient(135deg, rgba(29,122,242,0.04), rgba(40,182,122,0.04));
+        border-radius: 22px;
+        padding: 32px 18px;
+        text-align: center;
+        transition: 0.2s ease;
+      }
+
+      .upload-area.dragover {
+        background: rgba(29, 122, 242, 0.09);
+        transform: scale(1.01);
+      }
+
+      .upload-icon {
+        font-size: 2.6rem;
+        margin-bottom: 8px;
+      }
+
+      .upload-text {
+        color: var(--muted);
+        line-height: 1.8;
+        font-size: 0.96rem;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      .file-meta {
+        margin-top: 18px;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .analysis-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .stat-box {
+        background: linear-gradient(135deg, rgba(29,122,242,0.06), rgba(40,182,122,0.04));
+        border-radius: 16px;
+        padding: 16px 12px;
+        border: 1px solid rgba(17,45,80,0.05);
+      }
+
+      .stat-box small {
+        display: block;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+
+      .stat-box strong {
+        font-size: 1.65rem;
+      }
+
+      .file-list {
+        margin-top: 18px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(245, 248, 255, 0.9);
+        border: 1px solid rgba(17,45,80,0.05);
+      }
+
+      .file-name {
+        font-weight: 700;
+        word-break: break-all;
+      }
+
+      .file-type {
+        font-size: 0.76rem;
+        color: var(--muted);
+      }
+
+      .file-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 10px;
+        border-radius: 10px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        border: 1px solid transparent;
+      }
+
+      .chip.good {
+        color: #0d7a4d;
+        background: rgba(40, 182, 122, 0.09);
+      }
+
+      .chip.warn {
+        color: #7b5b00;
+        background: rgba(255, 180, 84, 0.12);
+      }
+
+      .keywords-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .keyword {
+        padding: 9px 12px;
+        border-radius: 999px;
+        background: rgba(29,122,242,0.08);
+        color: var(--primary-deep);
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .suggestion-list {
+        display: grid;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .suggestion {
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: rgba(236, 253, 245, 0.8);
+        border: 1px solid rgba(40,182,122,0.12);
+        color: #155a48;
+        line-height: 1.7;
+      }
+
+      .summary-box {
+        margin-top: 18px;
+        background: rgba(248,250,255,0.9);
+        border: 1px solid rgba(17,45,80,0.05);
+        border-radius: 18px;
+        padding: 18px;
+      }
+
+      .summary-box pre {
+        margin: 0;
+        white-space: pre-wrap;
+        color: var(--text);
+        line-height: 1.8;
+        font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+        font-size: 0.95rem;
+      }
+
+      @media (max-width: 980px) {
+        .hero-shell, .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .cards {
+          grid-template-columns: 1fr;
+        }
+
+        .discover-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .nav-links { gap: 12px; }
+      }
+
+      @media (max-width: 640px) {
+        .nav-links {
+          display: none;
+        }
+
+        .search-launch {
+          min-width: 0;
+          padding: 10px 12px;
+        }
+
+        .search-launch .search-label, .search-launch kbd { display: none; }
+        .search-launch::after { content: "搜索"; }
+        .nav > .btn { padding: 10px 12px; font-size: 0.84rem; }
+        .discover-hero { align-items: start; flex-direction: column; }
+        .discover-grid { grid-template-columns: 1fr; }
+        .search-box { grid-template-columns: auto 1fr; }
+        .search-box .btn { grid-column: 1 / -1; width: 100%; }
+
+        .analysis-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav">
+        <div class="brand">
+          <div class="brand-mark">医</div>
+          <span>临床医学院·学习资料平台</span>
+        </div>
+        <nav class="nav-links">
+          <a href="#features">功能介绍</a>
+          <a href="#discover">发现</a>
+          <a href="#workspace">资料上传</a>
+          <a href="#analysis">智能整理</a>
+        </nav>
+        <button class="search-launch" id="searchLaunch" type="button" aria-label="搜索学习资料">
+          <span aria-hidden="true">⌕</span><span class="search-label">搜索资料或主题</span><kbd>/</kbd>
+        </button>
+        <a class="btn btn-primary" href="https://www.aycc.edu.cn/" target="_blank" rel="noopener noreferrer">进入官网</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-shell">
+          <div>
+            <div class="eyebrow">高效学习 · 清晰整理 · 智能分析</div>
+            <h1>让学习资料更有序，知识更容易复盘。</h1>
+            <p class="subtitle">
+              面向临床医学学习场景，支持资料上传、自动分类、关键词提取和学习整理建议，帮助医学生快速梳理重点知识与学习结构。
+            </p>
+            <div class="cta-row">
+              <a class="btn btn-primary" href="#workspace">上传学习资料</a>
+              <a class="btn btn-secondary" href="https://www.aycc.edu.cn/" target="_blank" rel="noopener noreferrer">查看官网</a>
+            </div>
+            <div class="mini-stats">
+              <div class="mini-stat">
+                <strong>3x</strong>
+                <span>提升整理效率</span>
+              </div>
+              <div class="mini-stat">
+                <strong>24h</strong>
+                <span>随时随地整理</span>
+              </div>
+              <div class="mini-stat">
+                <strong>AI</strong>
+                <span>智能分析提炼</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-panel">
+            <div class="panel-top">
+              <div class="dot-group">
+                <span class="dot red"></span>
+                <span class="dot yellow"></span>
+                <span class="dot green"></span>
+              </div>
+              <span class="tag">Learning Dashboard</span>
+            </div>
+            <div class="mock-window">
+              <div class="mock-item">
+                <div>
+                  <div style="font-weight:700; margin-bottom:6px;">病理学复习要点</div>
+                  <div style="color:#66768e; font-size:0.8rem;">关键词：炎症 / 组织 / 结局</div>
+                </div>
+                <span class="tag">重点</span>
+              </div>
+              <div class="mock-item">
+                <div>
+                  <div style="font-weight:700; margin-bottom:6px;">临床技能实践记录</div>
+                  <div style="color:#66768e; font-size:0.8rem;">关键词：查体 / 诊断 / 治疗</div>
+                </div>
+                <span class="tag">待整理</span>
+              </div>
+              <div class="mock-item">
+                <div>
+                  <div style="font-weight:700; margin-bottom:6px;">药理学笔记</div>
+                  <div style="color:#66768e; font-size:0.8rem;">关键词：药物 / 机制 / 不良反应</div>
+                </div>
+                <span class="tag">已归档</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="search-section" id="search">
+        <div class="container">
+          <form class="search-box" id="siteSearchForm" role="search">
+            <span class="search-icon" aria-hidden="true">🔎</span>
+            <input id="siteSearchInput" type="search" autocomplete="off" placeholder="搜索学习资料、学科主题或临床技能" aria-label="搜索学习资料、学科主题或临床技能" />
+            <button class="btn btn-primary" type="submit">搜索</button>
+          </form>
+          <div class="search-results" id="searchResults" aria-live="polite">
+            <h3 id="searchResultHeading">搜索结果</h3>
+            <div class="search-result-list" id="searchResultList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="features">
+        <div class="container">
+          <div class="cards">
+            <article class="card">
+              <div class="icon-box">📤</div>
+              <h3>资料上传</h3>
+              <p>支持文字、笔记、课程资料等文件上传，支持拖拽导入和多文件批量处理。</p>
+            </article>
+            <article class="card">
+              <div class="icon-box">🔍</div>
+              <h3>智能分析</h3>
+              <p>自动统计字数、词频、关键词和学习重点，以便快速判断资料的重点和结构层次。</p>
+            </article>
+            <article class="card">
+              <div class="icon-box">🧠</div>
+              <h3>学习整理</h3>
+              <p>根据学科方向生成分类建议、整理方案和复习建议，助力高效复盘和知识沉淀。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="discover">
+        <div class="container">
+          <div class="discover-hero">
+            <div>
+              <div class="eyebrow">发现好内容 · 构建知识地图</div>
+              <h2 style="margin-top:14px;">学习发现</h2>
+              <p>按学科、技能与学习阶段探索主题指南；上传资料后，也可以通过顶部搜索快速定位个人资料。</p>
+            </div>
+            <div class="discover-count" id="discoverCount">精选主题</div>
+          </div>
+          <div class="discover-filters" id="discoverFilters" aria-label="发现内容分类"></div>
+          <div class="discover-grid" id="discoverGrid"></div>
+        </div>
+      </section>
+
+      <section class="section" id="workspace">
+        <div class="container workspace">
+          <div class="panel">
+            <h2>上传学习资料</h2>
+            <div id="uploadArea" class="upload-area" tabindex="0">
+              <div class="upload-icon">📁</div>
+              <div style="font-size:1.12rem; font-weight:700; margin-bottom:6px;">拖拽文件到此处</div>
+              <div class="upload-text">支持 .txt / .md / .csv / .json / .pdf 等文本资料<br />点击选择文件即可上传</div>
+            </div>
+            <input id="fileInput" class="file-input" type="file" multiple accept=".txt,.md,.csv,.json,.pdf" />
+            <div class="file-meta">
+              已上传：<span id="fileCount">0</span> 个文件
+            </div>
+            <div id="fileList" class="file-list"></div>
+          </div>
+
+          <div class="panel" id="analysis">
+            <h2>学习资料分析与整理</h2>
+            <div class="analysis-grid">
+              <div class="stat-box">
+                <small>文件数</small>
+                <strong id="statFiles">0</strong>
+              </div>
+              <div class="stat-box">
+                <small>总字数</small>
+                <strong id="statWords">0</strong>
+              </div>
+              <div class="stat-box">
+                <small>词频</small>
+                <strong id="statUnique">0</strong>
+              </div>
+              <div class="stat-box">
+                <small>重点主题</small>
+                <strong id="statThemes">0</strong>
+              </div>
+            </div>
+
+            <div style="margin-top:18px;">
+              <div style="font-weight:800; margin-bottom:10px;">关键词提取</div>
+              <div id="keywordCloud" class="keywords-wrap"></div>
+            </div>
+
+            <div style="margin-top:22px;">
+              <div style="font-weight:800; margin-bottom:10px;">整理建议</div>
+              <div id="suggestionList" class="suggestion-list"></div>
+            </div>
+
+            <div class="summary-box">
+              <div style="font-weight:800; margin-bottom:12px;">资料摘要</div>
+              <pre id="summaryText">暂无数据，先上传学习资料后查看分析结果。</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const fileInput = document.getElementById('fileInput');
+      const uploadArea = document.getElementById('uploadArea');
+      const fileList = document.getElementById('fileList');
+      const fileCount = document.getElementById('fileCount');
+      const keywordCloud = document.getElementById('keywordCloud');
+      const suggestionList = document.getElementById('suggestionList');
+      const summaryText = document.getElementById('summaryText');
+      const statFiles = document.getElementById('statFiles');
+      const statWords = document.getElementById('statWords');
+      const statUnique = document.getElementById('statUnique');
+      const statThemes = document.getElementById('statThemes');
+      const siteSearchInput = document.getElementById('siteSearchInput');
+      const searchResults = document.getElementById('searchResults');
+      const searchResultHeading = document.getElementById('searchResultHeading');
+      const searchResultList = document.getElementById('searchResultList');
+      const discoverGrid = document.getElementById('discoverGrid');
+      const discoverFilters = document.getElementById('discoverFilters');
+      const discoverCount = document.getElementById('discoverCount');
+      const uploadedRecords = [];
+      let activeCategory = '全部';
+      let searchQuery = '';
+
+      const MEDICAL_TAGS = [
+        '病理', '药理', '解剖', '诊断', '影像', '病历', '病例', '手术', '治疗',
+        '护理', '检验', '护理', '内科', '外科', '儿科', '妇产', '药物', '查体',
+        '机体', '机制', '临床', '实验', '基础', '病例分析', '病程'
+      ];
+
+      const DISCOVERY_CATEGORIES = ['全部', '基础医学', '临床技能', '病例训练', '考前复习'];
+      const DISCOVERY_ITEMS = [
+        {
+          id: 'anatomy-map', title: '人体解剖知识地图', category: '基础医学', icon: '🫀', color: 'blue',
+          description: '按系统梳理器官结构、毗邻关系与重要体表标志。',
+          tags: ['解剖', '系统学习', '结构记忆'],
+          detail: '建议采用“整体系统—局部结构—临床关联”三级笔记，并用图示标注血管、神经与器官的空间关系。'
+        },
+        {
+          id: 'pathology-core', title: '病理学核心概念', category: '基础医学', icon: '🧬', color: 'purple',
+          description: '围绕病因、发病机制、形态变化和结局建立知识链。',
+          tags: ['病理', '机制', '重点概念'],
+          detail: '复习时可将每种疾病整理为“病因与机制—大体和镜下改变—临床表现—结局”四栏，强化因果联系。'
+        },
+        {
+          id: 'pharmacology-review', title: '药理学分类速记', category: '考前复习', icon: '💊', color: 'green',
+          description: '对照药物类别、作用机制、适应证与不良反应。',
+          tags: ['药理', '药物', '考前复习'],
+          detail: '按系统建立药物对照表，重点比较同类药物的作用差异、禁忌证和典型不良反应。'
+        },
+        {
+          id: 'physical-exam', title: '临床查体训练清单', category: '临床技能', icon: '🩺', color: 'teal',
+          description: '把问诊、查体步骤和阳性体征记录成可复用清单。',
+          tags: ['查体', '临床技能', '诊断'],
+          detail: '每项技能按“准备—操作—观察—记录—解释”复盘；练习时核对规范顺序、患者沟通和无菌意识。'
+        },
+        {
+          id: 'case-reasoning', title: '典型病例推理练习', category: '病例训练', icon: '🧩', color: 'orange',
+          description: '从主诉和病史出发，逐步整理鉴别诊断与检查依据。',
+          tags: ['病例分析', '诊断', '临床思维'],
+          detail: '先提炼问题表征，再列出支持与反对证据；选择检查时写明其要验证的假设，避免只罗列检查项目。'
+        },
+        {
+          id: 'imaging-basics', title: '医学影像入门', category: '临床技能', icon: '🩻', color: 'pink',
+          description: '建立影像判读顺序，练习从定位到描述的规范表达。',
+          tags: ['影像', '临床技能', '检查'],
+          detail: '按照“检查方式—解剖定位—影像特征—可能意义”描述所见；影像结论应结合病史与其他检查综合判断。'
+        },
+        {
+          id: 'nursing-rounds', title: '护理评估与病程记录', category: '临床技能', icon: '📋', color: 'green',
+          description: '归纳常见评估要点、病情观察和记录结构。',
+          tags: ['护理', '病程', '记录'],
+          detail: '记录应客观、及时、可追溯；可按评估发现、采取措施、患者反应和后续计划整理学习笔记。'
+        },
+        {
+          id: 'exam-plan', title: '一周考前复习计划', category: '考前复习', icon: '📅', color: 'purple',
+          description: '将知识回顾、错题整理和间隔复习安排到每日任务。',
+          tags: ['复习计划', '错题', '记忆'],
+          detail: '每天安排一段主动回忆、一段错题复盘和一次短时回顾；依据掌握程度调整计划，避免只重复阅读。'
+        },
+        {
+          id: 'lab-tests', title: '常见检验指标梳理', category: '病例训练', icon: '🧪', color: 'orange',
+          description: '关联检验项目、临床意义、影响因素与解释边界。',
+          tags: ['检验', '诊断', '临床'],
+          detail: '按系统整理指标的参考范围与临床解释，并记录可能的干扰因素；单项异常不能脱离临床背景直接下结论。'
+        }
+      ];
+
+      function matchesQuery(value, query) {
+        return String(value || '').toLocaleLowerCase().includes(query.toLocaleLowerCase());
+      }
+
+      function renderDiscoveryFilters() {
+        discoverFilters.replaceChildren();
+        DISCOVERY_CATEGORIES.forEach(category => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `filter-chip${category === activeCategory ? ' active' : ''}`;
+          button.textContent = category;
+          button.setAttribute('aria-pressed', String(category === activeCategory));
+          button.addEventListener('click', () => {
+            activeCategory = category;
+            renderDiscoveryFilters();
+            renderDiscoveryCards();
+          });
+          discoverFilters.append(button);
+        });
+      }
+
+      function renderDiscoveryCards() {
+        const items = DISCOVERY_ITEMS.filter(item => {
+          const inCategory = activeCategory === '全部' || item.category === activeCategory;
+          const searchable = [item.title, item.category, item.description, item.tags.join(' '), item.detail].join(' ');
+          return inCategory && (!searchQuery || matchesQuery(searchable, searchQuery));
+        });
+        discoverCount.textContent = `显示 ${items.length} 个主题`;
+        discoverGrid.replaceChildren();
+
+        if (!items.length) {
+          const empty = document.createElement('div');
+          empty.className = 'discover-empty';
+          empty.textContent = searchQuery ? `没有找到与“${searchQuery}”匹配的发现内容，试试其他关键词。` : '该分类暂时没有内容。';
+          discoverGrid.append(empty);
+          return;
+        }
+
+        items.forEach(item => {
+          const card = document.createElement('article');
+          card.className = 'discover-card';
+          card.id = `discover-${item.id}`;
+
+          const cover = document.createElement('div');
+          cover.className = `discover-cover ${item.color}`;
+          cover.setAttribute('aria-hidden', 'true');
+          cover.textContent = item.icon;
+
+          const content = document.createElement('div');
+          content.className = 'discover-content';
+          const category = document.createElement('div');
+          category.className = 'discover-category';
+          category.textContent = item.category;
+          const title = document.createElement('h3');
+          title.textContent = item.title;
+          const description = document.createElement('p');
+          description.textContent = item.description;
+          const tags = document.createElement('div');
+          tags.className = 'discover-tags';
+          item.tags.forEach(tagText => {
+            const tag = document.createElement('span');
+            tag.className = 'discover-tag';
+            tag.textContent = tagText;
+            tags.append(tag);
+          });
+          const detail = document.createElement('p');
+          detail.className = 'discover-detail';
+          detail.hidden = true;
+          detail.textContent = item.detail;
+          const action = document.createElement('button');
+          action.className = 'btn btn-secondary';
+          action.type = 'button';
+          action.textContent = '查看学习建议';
+          action.setAttribute('aria-expanded', 'false');
+          action.addEventListener('click', () => {
+            detail.hidden = !detail.hidden;
+            action.setAttribute('aria-expanded', String(!detail.hidden));
+            action.textContent = detail.hidden ? '查看学习建议' : '收起学习建议';
+          });
+
+          content.append(category, title, description, tags, detail, action);
+          card.append(cover, content);
+          discoverGrid.append(card);
+        });
+      }
+
+      function renderSearchResults() {
+        const query = searchQuery.trim();
+        if (!query) {
+          searchResults.classList.remove('visible');
+          searchResultList.replaceChildren();
+          return;
+        }
+
+        const results = [];
+        DISCOVERY_ITEMS.forEach(item => {
+          const searchable = [item.title, item.category, item.description, item.tags.join(' '), item.detail].join(' ');
+          if (matchesQuery(searchable, query)) {
+            results.push({ title: item.title, type: '发现主题', target: `discover-${item.id}`, kind: 'discovery' });
+          }
+        });
+        uploadedRecords.forEach((record, index) => {
+          if (matchesQuery(`${record.file.name} ${record.text}`, query)) {
+            results.push({ title: record.file.name, type: '我的资料', target: `uploaded-file-${index}`, kind: 'file' });
+          }
+        });
+
+        searchResultHeading.textContent = `“${query}”的搜索结果（${results.length}）`;
+        searchResultList.replaceChildren();
+        if (!results.length) {
+          const empty = document.createElement('div');
+          empty.className = 'discover-empty';
+          empty.textContent = '暂未找到匹配内容。可尝试“病理”“药理”“查体”等关键词。';
+          searchResultList.append(empty);
+        } else {
+          results.slice(0, 12).forEach(result => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'search-result';
+            const title = document.createElement('span');
+            title.textContent = result.title;
+            const type = document.createElement('span');
+            type.className = 'result-type';
+            type.textContent = result.type;
+            button.append(title, type);
+            button.addEventListener('click', () => {
+              if (result.kind === 'discovery') {
+                activeCategory = '全部';
+                renderDiscoveryFilters();
+                renderDiscoveryCards();
+              }
+              document.getElementById(result.target)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              const target = document.getElementById(result.target);
+              if (target) {
+                target.animate([{ boxShadow: '0 0 0 0 rgba(29,122,242,0)' }, { boxShadow: '0 0 0 5px rgba(29,122,242,0.24)' }, { boxShadow: '0 0 0 0 rgba(29,122,242,0)' }], { duration: 1000 });
+              }
+            });
+            searchResultList.append(button);
+          });
+        }
+        searchResults.classList.add('visible');
+      }
+
+      function runSearch(value = siteSearchInput.value) {
+        searchQuery = value.trim();
+        siteSearchInput.value = value;
+        activeCategory = '全部';
+        renderDiscoveryFilters();
+        renderDiscoveryCards();
+        renderFileList(uploadedRecords);
+        renderSearchResults();
+      }
+
+      function parseTextContent(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = typeof reader.result === 'string' ? reader.result : '';
+            resolve({ file, content: result });
+          };
+          reader.onerror = () => reject(new Error('读取文件失败'));
+
+          if (file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf')) {
+            const url = URL.createObjectURL(file);
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
+            script.type = 'module';
+            script.onload = async () => {
+              try {
+                const pdfjsLib = window.pdfjsLib || await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+                const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+                let text = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                  const page = await pdf.getPage(i);
+                  const pageText = await page.getTextContent();
+                  text += pageText.items.map(item => item.str).join(' ') + '\n';
+                }
+                resolve({ file, content: text });
+              } catch (error) {
+                resolve({ file, content: '[PDF解析失败：当前浏览器未加载PDF解析库或文件非标准文本PDF]' });
+              }
+            };
+            script.onerror = () => resolve({ file, content: '[PDF解析失败：当前浏览器未加载PDF解析库]' });
+            document.head.appendChild(script);
+            return;
+          }
+
+          reader.readAsText(file, 'utf-8');
+        });
+      }
+
+      function extractKeywords(text) {
+        const matches = new Map();
+        MEDICAL_TAGS.forEach(tag => {
+          const regex = new RegExp(tag, 'gi');
+          const count = (text.match(regex) || []).length;
+          if (count > 0) matches.set(tag, count);
+        });
+        return [...matches.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 8);
+      }
+
+      function computeSummary(files) {
+        const summaries = files.map(item => {
+          const clean = item.text
+            .replace(/\s+/g, ' ')
+            .replace(/[\u200B-\u200D\uFEFF]/g, '')
+            .trim();
+          const hint = clean.length > 0 ? clean.slice(0, 220) : '暂无内容';
+          const keywords = extractKeywords(clean);
+          const theme = keywords[0]?.[0] || '综合学习';
+          return { ...item, clean, keywords, theme, hint };
+        });
+
+        const totalWords = summaries.reduce((sum, item) => sum + item.clean.split(/\s+/).filter(Boolean).length, 0);
+        const uniqueWords = new Set(summaries.flatMap(item => item.clean.match(/[\u4e00-\u9fa5a-zA-Z0-9]+/g) || [])).size;
+        const themes = new Set(summaries.map(item => item.theme));
+
+        const summary = summaries.map((item, idx) => {
+          const topic = item.keywords.length ? item.keywords.map(([k]) => k).slice(0, 3).join('、') : '综合学习';
+          return `【${idx + 1}】${item.file.name}\n主题：${topic}\n整理建议：按“${item.theme}”方向梳理重点；建议将正文分为基础知识、典型病例、复习要点三部分。\n摘要：${item.hint}...\n`;
+        }).join('\n');
+
+        return {
+          totalWords,
+          uniqueWords,
+          themeCount: themes.size,
+          summary,
+          summaries
+        };
+      }
+
+      function renderSuggestions(summaries) {
+        suggestionList.replaceChildren();
+        if (!summaries.length) {
+          const empty = document.createElement('div');
+          empty.className = 'suggestion';
+          empty.textContent = '暂无整理建议，请先上传学习资料。';
+          suggestionList.append(empty);
+          return;
+        }
+
+        summaries.forEach((item, idx) => {
+          const keywordText = item.keywords.length ? item.keywords.map(([k, v]) => `${k}(${v})`).join(' · ') : '综合复习';
+          const suggestion = document.createElement('div');
+          suggestion.className = 'suggestion';
+          const title = document.createElement('strong');
+          title.textContent = `${idx + 1}. ${item.file.name}`;
+          const text = document.createElement('span');
+          text.textContent = `关键内容：${keywordText}；建议按“基础概念 → 重点病症 → 复习要点”三层结构进行整理，便于临床记忆和考前速查。`;
+          suggestion.append(title, document.createElement('br'), text);
+          suggestionList.append(suggestion);
+        });
+      }
+
+      function renderKeywords(summaries) {
+        const allKeywords = summaries.flatMap(item => item.keywords);
+        const map = new Map();
+        allKeywords.forEach(([key, count]) => map.set(key, (map.get(key) || 0) + count));
+        const topKeywords = [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+        keywordCloud.innerHTML = topKeywords.length
+          ? topKeywords.map(([key, count]) => `<span class="keyword">${key} × ${count}</span>`).join('')
+          : '<span class="keyword">等待上传资料</span>';
+      }
+
+      function renderFileList(files) {
+        fileList.replaceChildren();
+        if (!files.length) {
+          const empty = document.createElement('div');
+          empty.className = 'file-item';
+          empty.textContent = '暂无上传文件';
+          fileList.append(empty);
+          return;
+        }
+
+        const query = searchQuery.toLocaleLowerCase();
+        let shown = 0;
+        files.forEach((record, index) => {
+          const file = record.file;
+          if (query && !matchesQuery(`${file.name} ${record.text}`, query)) return;
+          shown += 1;
+          const item = document.createElement('div');
+          item.className = 'file-item';
+          item.id = `uploaded-file-${index}`;
+          const details = document.createElement('div');
+          const name = document.createElement('div');
+          name.className = 'file-name';
+          name.textContent = file.name;
+          const type = document.createElement('div');
+          type.className = 'file-type';
+          type.textContent = `${file.type || '未知类型'} • ${(file.size / 1024).toFixed(1)} KB`;
+          details.append(name, type);
+          const actions = document.createElement('div');
+          actions.className = 'file-actions';
+          const status = document.createElement('span');
+          status.className = 'chip good';
+          status.textContent = '已分析';
+          actions.append(status);
+          item.append(details, actions);
+          fileList.append(item);
+        });
+
+        if (!shown) {
+          const empty = document.createElement('div');
+          empty.className = 'file-item';
+          empty.textContent = `没有找到包含“${searchQuery}”的已上传资料。`;
+          fileList.append(empty);
+        }
+      }
+
+      async function handleFiles(fileListInput) {
+        const files = Array.from(fileListInput);
+        if (!files.length) return;
+
+        const parsed = await Promise.all(files.map(parseTextContent));
+        parsed.forEach(({ file, content }) => {
+          const duplicate = uploadedRecords.some(record =>
+            record.file.name === file.name &&
+            record.file.size === file.size &&
+            record.file.lastModified === file.lastModified
+          );
+          if (!duplicate) uploadedRecords.push({ file, text: content, keywords: extractKeywords(content) });
+        });
+        const metrics = computeSummary(uploadedRecords);
+
+        renderFileList(uploadedRecords);
+        renderKeywords(metrics.summaries);
+        renderSuggestions(metrics.summaries);
+        summaryText.textContent = metrics.summary || '暂无内容';
+
+        fileCount.textContent = String(uploadedRecords.length);
+        statFiles.textContent = String(uploadedRecords.length);
+        statWords.textContent = String(metrics.totalWords);
+        statUnique.textContent = String(metrics.uniqueWords);
+        statThemes.textContent = String(metrics.themeCount);
+        renderSearchResults();
+      }
+
+      uploadArea.addEventListener('click', () => fileInput.click());
+      uploadArea.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      ['dragenter', 'dragover'].forEach(type => {
+        uploadArea.addEventListener(type, (event) => {
+          event.preventDefault();
+          uploadArea.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(type => {
+        uploadArea.addEventListener(type, (event) => {
+          event.preventDefault();
+          uploadArea.classList.remove('dragover');
+        });
+      });
+
+      uploadArea.addEventListener('drop', (event) => {
+        const files = event.dataTransfer.files;
+        if (files && files.length) {
+          handleFiles(files);
+        }
+      });
+
+      fileInput.addEventListener('change', (event) => {
+        handleFiles(event.target.files);
+        fileInput.value = '';
+      });
+
+      document.getElementById('siteSearchForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        runSearch();
+      });
+
+      siteSearchInput.addEventListener('input', () => runSearch());
+
+      document.getElementById('searchLaunch').addEventListener('click', () => {
+        document.getElementById('search').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        siteSearchInput.focus({ preventScroll: true });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        const target = event.target;
+        const isTyping = target instanceof HTMLElement &&
+          (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+        if (event.key === '/' && !isTyping) {
+          event.preventDefault();
+          document.getElementById('search').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          siteSearchInput.focus({ preventScroll: true });
+        }
+        if (event.key === 'Escape' && document.activeElement === siteSearchInput) {
+          siteSearchInput.value = '';
+          runSearch('');
+          siteSearchInput.blur();
+        }
+      });
+
+      renderDiscoveryFilters();
+      renderDiscoveryCards();
+    </script>
+  </body>
+</html>
