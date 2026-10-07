@@ -1,1354 +1,805 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>临床医学院学习资料管理</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>医疗大数据技术的过拟合问题</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/white.css">
     <style>
-      :root {
-        --bg1: #eef6ff;
-        --bg2: #ecfdf5;
-        --primary: #1d7af2;
-        --primary-deep: #0e4fb8;
-        --accent: #28b67a;
-        --text: #183153;
-        --muted: #66768e;
-        --card: rgba(255, 255, 255, 0.8);
-        --line: rgba(24, 49, 83, 0.08);
-        --shadow: 0 20px 45px rgba(20, 60, 120, 0.12);
-      }
-
-      * { box-sizing: border-box; }
-
-      html { scroll-behavior: smooth; }
-
-      body {
-        margin: 0;
-        font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
-        background: linear-gradient(135deg, var(--bg1), var(--bg2));
-        color: var(--text);
-      }
-
-      a { text-decoration: none; }
-
-      .container {
-        width: min(1200px, calc(100% - 32px));
-        margin: 0 auto;
-      }
-
-      .topbar {
-        position: sticky;
-        top: 0;
-        z-index: 30;
-        backdrop-filter: blur(16px);
-        background: rgba(255, 255, 255, 0.6);
-        border-bottom: 1px solid rgba(17, 45, 80, 0.06);
-      }
-
-      .nav {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        min-height: 72px;
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-weight: 700;
-        font-size: 1.08rem;
-      }
-
-      .brand-mark {
-        width: 42px;
-        height: 42px;
-        border-radius: 14px;
-        display: grid;
-        place-items: center;
-        color: white;
-        font-weight: 900;
-        background: linear-gradient(135deg, var(--primary), #6ea7ff);
-        box-shadow: 0 12px 20px rgba(29, 122, 242, 0.25);
-      }
-
-      .nav-links {
-        display: flex;
-        gap: 24px;
-        color: var(--muted);
-        font-size: 0.94rem;
-      }
-
-      .nav-links a:hover { color: var(--primary); }
-
-      .search-launch {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 210px;
-        padding: 10px 14px;
-        border: 1px solid rgba(17, 45, 80, 0.1);
-        border-radius: 14px;
-        background: rgba(255, 255, 255, 0.82);
-        color: var(--muted);
-        cursor: pointer;
-        font: inherit;
-        text-align: left;
-      }
-
-      .search-launch kbd {
-        margin-left: auto;
-        padding: 2px 6px;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        background: white;
-        font-size: 0.72rem;
-      }
-
-      .search-section { padding: 10px 0 36px; }
-
-      .search-box {
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        border: 1px solid rgba(29, 122, 242, 0.14);
-        border-radius: 20px;
-        background: rgba(255, 255, 255, 0.86);
-        box-shadow: 0 14px 32px rgba(20, 60, 120, 0.08);
-      }
-
-      .search-icon { padding: 0 4px 0 8px; font-size: 1.25rem; }
-
-      .search-box input {
-        width: 100%;
-        min-width: 0;
-        padding: 10px 0;
-        border: 0;
-        outline: 0;
-        background: transparent;
-        color: var(--text);
-        font: inherit;
-      }
-
-      .search-results {
-        display: none;
-        margin-top: 12px;
-        padding: 16px;
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.9);
-        box-shadow: 0 12px 28px rgba(20, 60, 120, 0.06);
-      }
-
-      .search-results.visible { display: block; }
-      .search-results h3 { margin: 0 0 10px; font-size: 1rem; }
-      .search-result-list { display: grid; gap: 8px; }
-
-      .search-result {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        width: 100%;
-        padding: 12px 14px;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: #f8fbff;
-        color: var(--text);
-        cursor: pointer;
-        font: inherit;
-        text-align: left;
-      }
-
-      .search-result:hover { border-color: rgba(29, 122, 242, 0.35); }
-      .result-type { flex: 0 0 auto; color: var(--primary-deep); font-size: 0.82rem; }
-
-      .discover-hero {
-        display: flex;
-        justify-content: space-between;
-        align-items: end;
-        gap: 24px;
-        margin-bottom: 22px;
-      }
-
-      .discover-hero h2 { margin: 0 0 8px; font-size: clamp(1.7rem, 3vw, 2.35rem); }
-      .discover-hero p { margin: 0; color: var(--muted); line-height: 1.7; }
-      .discover-count { color: var(--primary-deep); font-weight: 800; white-space: nowrap; }
-
-      .discover-filters {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 18px;
-      }
-
-      .filter-chip {
-        padding: 9px 14px;
-        border: 1px solid rgba(17, 45, 80, 0.09);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.75);
-        color: var(--muted);
-        cursor: pointer;
-        font: inherit;
-        font-size: 0.88rem;
-      }
-
-      .filter-chip.active {
-        border-color: transparent;
-        background: linear-gradient(135deg, var(--primary), #5e9eff);
-        color: white;
-        box-shadow: 0 8px 18px rgba(29, 122, 242, 0.18);
-      }
-
-      .discover-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 18px;
-      }
-
-      .discover-card {
-        overflow: hidden;
-        border: 1px solid var(--line);
-        border-radius: 22px;
-        background: rgba(255, 255, 255, 0.86);
-        box-shadow: 0 12px 28px rgba(20, 60, 120, 0.07);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-      }
-
-      .discover-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
-
-      .discover-cover {
-        min-height: 118px;
-        display: flex;
-        align-items: end;
-        padding: 18px;
-        color: white;
-        font-size: 2.2rem;
-      }
-
-      .discover-cover.blue { background: linear-gradient(135deg, #2563eb, #60a5fa); }
-      .discover-cover.green { background: linear-gradient(135deg, #059669, #34d399); }
-      .discover-cover.purple { background: linear-gradient(135deg, #7c3aed, #c084fc); }
-      .discover-cover.orange { background: linear-gradient(135deg, #ea580c, #fb923c); }
-      .discover-cover.pink { background: linear-gradient(135deg, #db2777, #f472b6); }
-      .discover-cover.teal { background: linear-gradient(135deg, #0e7490, #22d3ee); }
-
-      .discover-content { padding: 18px; }
-      .discover-category { color: var(--primary-deep); font-size: 0.78rem; font-weight: 800; }
-      .discover-content h3 { margin: 7px 0; font-size: 1.12rem; }
-      .discover-content > p { min-height: 50px; margin: 0; color: var(--muted); line-height: 1.65; font-size: 0.9rem; }
-      .discover-tags { display: flex; flex-wrap: wrap; gap: 7px; margin: 13px 0; }
-      .discover-tag { padding: 5px 9px; border-radius: 999px; background: #f0f5ff; color: #486184; font-size: 0.75rem; }
-      .discover-detail { margin: 12px 0; padding: 12px; border-radius: 12px; background: #f4fbf8; color: #376554; font-size: 0.86rem; line-height: 1.65; }
-      .discover-detail[hidden] { display: none; }
-      .discover-empty { grid-column: 1 / -1; padding: 32px; border: 1px dashed rgba(29, 122, 242, 0.24); border-radius: 18px; color: var(--muted); text-align: center; }
-      .file-item[hidden] { display: none; }
-
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        border: none;
-        border-radius: 14px;
-        padding: 14px 22px;
-        cursor: pointer;
-        font-size: 0.98rem;
-        font-weight: 700;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-      }
-
-      .btn:hover {
-        transform: translateY(-2px);
-      }
-
-      .btn-primary {
-        background: linear-gradient(135deg, var(--primary), #5e9eff);
-        color: white;
-        box-shadow: 0 14px 24px rgba(29, 122, 242, 0.18);
-      }
-
-      .btn-secondary {
-        background: rgba(255, 255, 255, 0.75);
-        color: var(--text);
-        border: 1px solid rgba(17, 45, 80, 0.07);
-      }
-
-      .hero {
-        padding: 72px 0 36px;
-      }
-
-      .hero-shell {
-        display: grid;
-        grid-template-columns: 1.15fr 0.85fr;
-        gap: 30px;
-        align-items: center;
-      }
-
-      .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: rgba(29, 122, 242, 0.08);
-        color: var(--primary-deep);
-        font-size: 0.8rem;
-        font-weight: 700;
-      }
-
-      h1 {
-        margin: 18px 0 18px;
-        font-size: clamp(2.3rem, 4vw, 4.2rem);
-        line-height: 1.08;
-        letter-spacing: -0.06em;
-      }
-
-      .subtitle {
-        margin: 0 0 26px;
-        max-width: 640px;
-        line-height: 1.8;
-        font-size: 1.04rem;
-        color: var(--muted);
-      }
-
-      .cta-row {
-        display: flex;
-        gap: 14px;
-        flex-wrap: wrap;
-        margin-bottom: 28px;
-      }
-
-      .mini-stats {
-        display: flex;
-        gap: 16px;
-        flex-wrap: wrap;
-      }
-
-      .mini-stat {
-        min-width: 150px;
-        padding: 14px 16px;
-        background: rgba(255, 255, 255, 0.7);
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        box-shadow: 0 8px 20px rgba(18, 48, 90, 0.05);
-      }
-
-      .mini-stat strong {
-        display: block;
-        font-size: 1.5rem;
-        margin-bottom: 4px;
-      }
-
-      .mini-stat span {
-        color: var(--muted);
-        font-size: 0.8rem;
-      }
-
-      .hero-panel {
-        background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.68));
-        border: 1px solid var(--line);
-        border-radius: 28px;
-        padding: 24px;
-        box-shadow: var(--shadow);
-      }
-
-      .panel-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 18px;
-      }
-
-      .dot-group {
-        display: flex;
-        gap: 8px;
-      }
-
-      .dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-      }
-
-      .dot.red { background: #ff6d7a; }
-      .dot.yellow { background: #ffb454; }
-      .dot.green { background: #3cc88f; }
-
-      .mock-window {
-        background: linear-gradient(180deg, rgba(16, 39, 78, 0.04), rgba(16, 39, 78, 0.02));
-        border: 1px solid rgba(17, 45, 80, 0.06);
-        border-radius: 18px;
-        padding: 20px;
-      }
-
-      .mock-item {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-        align-items: center;
-        padding: 14px 12px;
-        border-radius: 12px;
-        background: white;
-        border: 1px solid rgba(17, 45, 80, 0.04);
-        margin-bottom: 12px;
-      }
-
-      .mock-item:last-child { margin-bottom: 0; }
-
-      .tag {
-        display: inline-flex;
-        align-items: center;
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: rgba(40, 182, 122, 0.12);
-        color: #127b59;
-        font-size: 0.72rem;
-        font-weight: 700;
-      }
-
-      .section {
-        padding: 16px 0 40px;
-      }
-
-      .cards {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 22px;
-      }
-
-      .card {
-        background: rgba(255, 255, 255, 0.72);
-        border: 1px solid var(--line);
-        border-radius: 22px;
-        padding: 28px 22px;
-        box-shadow: 0 12px 28px rgba(20, 60, 120, 0.06);
-      }
-
-      .icon-box {
-        width: 52px;
-        height: 52px;
-        border-radius: 16px;
-        display: grid;
-        place-items: center;
-        font-size: 1.4rem;
-        margin-bottom: 18px;
-        background: linear-gradient(135deg, rgba(29,122,242,0.12), rgba(40,182,122,0.12));
-      }
-
-      .card h3 {
-        margin: 0 0 10px;
-        font-size: 1.15rem;
-      }
-
-      .card p {
-        margin: 0;
-        color: var(--muted);
-        line-height: 1.75;
-        font-size: 0.95rem;
-      }
-
-      .workspace {
-        display: grid;
-        grid-template-columns: 0.9fr 1.1fr;
-        gap: 24px;
-        margin-top: 20px;
-      }
-
-      .panel {
-        background: rgba(255,255,255,0.78);
-        border: 1px solid var(--line);
-        border-radius: 26px;
-        padding: 24px;
-        box-shadow: 0 16px 32px rgba(15, 44, 96, 0.06);
-      }
-
-      .panel h2 {
-        margin: 0 0 18px;
-        font-size: 1.45rem;
-      }
-
-      .upload-area {
-        border: 2px dashed rgba(29, 122, 242, 0.38);
-        background: linear-gradient(135deg, rgba(29,122,242,0.04), rgba(40,182,122,0.04));
-        border-radius: 22px;
-        padding: 32px 18px;
-        text-align: center;
-        transition: 0.2s ease;
-      }
-
-      .upload-area.dragover {
-        background: rgba(29, 122, 242, 0.09);
-        transform: scale(1.01);
-      }
-
-      .upload-icon {
-        font-size: 2.6rem;
-        margin-bottom: 8px;
-      }
-
-      .upload-text {
-        color: var(--muted);
-        line-height: 1.8;
-        font-size: 0.96rem;
-      }
-
-      .file-input {
-        display: none;
-      }
-
-      .file-meta {
-        margin-top: 18px;
-        font-size: 0.85rem;
-        color: var(--muted);
-      }
-
-      .analysis-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 12px;
-        margin-top: 18px;
-      }
-
-      .stat-box {
-        background: linear-gradient(135deg, rgba(29,122,242,0.06), rgba(40,182,122,0.04));
-        border-radius: 16px;
-        padding: 16px 12px;
-        border: 1px solid rgba(17,45,80,0.05);
-      }
-
-      .stat-box small {
-        display: block;
-        color: var(--muted);
-        margin-bottom: 10px;
-      }
-
-      .stat-box strong {
-        font-size: 1.65rem;
-      }
-
-      .file-list {
-        margin-top: 18px;
-        display: grid;
-        gap: 12px;
-      }
-
-      .file-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 12px 14px;
-        border-radius: 14px;
-        background: rgba(245, 248, 255, 0.9);
-        border: 1px solid rgba(17,45,80,0.05);
-      }
-
-      .file-name {
-        font-weight: 700;
-        word-break: break-all;
-      }
-
-      .file-type {
-        font-size: 0.76rem;
-        color: var(--muted);
-      }
-
-      .file-actions {
-        display: flex;
-        gap: 8px;
-      }
-
-      .chip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 10px;
-        border-radius: 10px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        border: 1px solid transparent;
-      }
-
-      .chip.good {
-        color: #0d7a4d;
-        background: rgba(40, 182, 122, 0.09);
-      }
-
-      .chip.warn {
-        color: #7b5b00;
-        background: rgba(255, 180, 84, 0.12);
-      }
-
-      .keywords-wrap {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 14px;
-      }
-
-      .keyword {
-        padding: 9px 12px;
-        border-radius: 999px;
-        background: rgba(29,122,242,0.08);
-        color: var(--primary-deep);
-        font-size: 0.8rem;
-        font-weight: 700;
-      }
-
-      .suggestion-list {
-        display: grid;
-        gap: 12px;
-        margin-top: 16px;
-      }
-
-      .suggestion {
-        padding: 14px 16px;
-        border-radius: 16px;
-        background: rgba(236, 253, 245, 0.8);
-        border: 1px solid rgba(40,182,122,0.12);
-        color: #155a48;
-        line-height: 1.7;
-      }
-
-      .summary-box {
-        margin-top: 18px;
-        background: rgba(248,250,255,0.9);
-        border: 1px solid rgba(17,45,80,0.05);
-        border-radius: 18px;
-        padding: 18px;
-      }
-
-      .summary-box pre {
-        margin: 0;
-        white-space: pre-wrap;
-        color: var(--text);
-        line-height: 1.8;
-        font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
-        font-size: 0.95rem;
-      }
-
-      @media (max-width: 980px) {
-        .hero-shell, .workspace {
-          grid-template-columns: 1fr;
+        :root {
+            --primary: #0a4d8c;
+            --primary-deep: #082d56;
+            --secondary: #1d9bf0;
+            --accent: #ff6b6b;
+            --success: #27ae60;
+            --warning: #f4b942;
+            --bg-soft: #edf5ff;
+            --bg-card: rgba(255,255,255,0.8);
+            --border: #dfeaf6;
+            --text: #233549;
+            --muted: #66809b;
+            --shadow: 0 18px 40px rgba(10, 77, 140, 0.12);
         }
 
-        .cards {
-          grid-template-columns: 1fr;
+        .reveal {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background: linear-gradient(180deg, #f5f9ff 0%, #edf5ff 100%);
         }
 
-        .discover-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .nav-links { gap: 12px; }
-      }
-
-      @media (max-width: 640px) {
-        .nav-links {
-          display: none;
+        .reveal .slides section {
+            text-align: left;
+            padding: 24px 36px;
+            background: transparent;
         }
 
-        .search-launch {
-          min-width: 0;
-          padding: 10px 12px;
+        .reveal h1, .reveal h2, .reveal h3 {
+            color: var(--primary);
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
-        .search-launch .search-label, .search-launch kbd { display: none; }
-        .search-launch::after { content: "搜索"; }
-        .nav > .btn { padding: 10px 12px; font-size: 0.84rem; }
-        .discover-hero { align-items: start; flex-direction: column; }
-        .discover-grid { grid-template-columns: 1fr; }
-        .search-box { grid-template-columns: auto 1fr; }
-        .search-box .btn { grid-column: 1 / -1; width: 100%; }
-
-        .analysis-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+        .reveal h1 {
+            font-size: 1.8em;
+            margin-bottom: 0.25em;
         }
-      }
+
+        .reveal h2 {
+            font-size: 1.35em;
+            margin-bottom: 0.4em;
+        }
+
+        .reveal h3 {
+            font-size: 1.02em;
+            margin-bottom: 0.3em;
+        }
+
+        .reveal p, .reveal li {
+            font-size: 0.8em;
+            line-height: 1.7;
+            color: var(--text);
+        }
+
+        .reveal ul, .reveal ol {
+            margin-top: 0.5em;
+        }
+
+        .reveal li {
+            margin: 0.24em 0;
+        }
+
+        .reveal strong {
+            color: var(--primary-deep);
+        }
+
+        .center { text-align: center; }
+        .muted { color: var(--muted); }
+        .highlight { color: var(--accent); font-weight: 700; }
+        .success { color: var(--success); font-weight: 700; }
+        .warning { color: var(--warning); font-weight: 700; }
+
+        .cover {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #eaf3ff 0%, #dfeeff 35%, #eff7ff 100%);
+            border: 1px solid rgba(10, 77, 140, 0.08);
+            box-shadow: var(--shadow);
+        }
+
+        .cover::before, .cover::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(8px);
+            opacity: 0.8;
+        }
+
+        .cover::before {
+            width: 240px;
+            height: 240px;
+            background: rgba(29, 155, 240, 0.12);
+            right: -40px;
+            top: -60px;
+        }
+
+        .cover::after {
+            width: 220px;
+            height: 220px;
+            background: rgba(255, 107, 107, 0.10);
+            left: -40px;
+            bottom: -50px;
+        }
+
+        .cover .badge {
+            display: inline-block;
+            padding: 7px 14px;
+            border-radius: 20px;
+            background: rgba(10, 77, 140, 0.08);
+            border: 1px solid rgba(10, 77, 140, 0.12);
+            color: var(--primary);
+            font-size: 0.62em;
+            letter-spacing: 1.5px;
+            margin-bottom: 14px;
+        }
+
+        .cover .title-wrap {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cover h2 {
+            font-size: 1.2em;
+            margin-bottom: 0.4em;
+            color: var(--primary);
+        }
+
+        .cover h1 {
+            font-size: 2.1em;
+            line-height: 1.1;
+            margin: 0 0 0.2em;
+            color: var(--primary-deep);
+        }
+
+        .cover .subtitle {
+            font-size: 0.75em;
+            color: var(--muted);
+            margin-top: 0.2em;
+            letter-spacing: 0.2px;
+        }
+
+        .cover .footer-note {
+            margin-top: 24px;
+            font-size: 0.55em;
+            color: var(--muted);
+            letter-spacing: 0.08em;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.8);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 20px 18px;
+            margin-top: 12px;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .three-col {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 12px;
+        }
+
+        .metric-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(232,240,255,0.75));
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 14px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(10,77,140,0.06);
+        }
+
+        .metric-card .big {
+            display: block;
+            font-size: 1.5em;
+            font-weight: 800;
+            color: var(--primary-deep);
+            margin-bottom: 6px;
+        }
+
+        .metric-card .small {
+            font-size: 0.58em;
+            color: var(--muted);
+        }
+
+        .mini-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            background: rgba(29,155,240,0.08);
+            color: var(--primary);
+            border-radius: 999px;
+            border: 1px solid rgba(29,155,240,0.15);
+            font-size: 0.52em;
+            font-weight: 700;
+            margin-right: 6px;
+        }
+
+        .quote {
+            position: relative;
+            padding: 18px 20px 18px 30px;
+            border-left: 5px solid var(--secondary);
+            background: rgba(112,195,255,0.07);
+            border-radius: 12px;
+            font-size: 0.78em;
+            line-height: 1.7;
+        }
+
+        .chart-box {
+            background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(238,247,255,0.9));
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 14px 12px 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .curve-wrap {
+            width: 100%;
+            height: 210px;
+            margin-top: 8px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, #f8fbff, #eef6ff);
+            border: 1px solid rgba(10,77,140,0.08);
+        }
+
+        .curve-wrap svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .legend {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            justify-content: center;
+            margin-top: 10px;
+            font-size: 0.56em;
+            color: var(--muted);
+        }
+
+        .legend i {
+            display: inline-block;
+            width: 14px;
+            height: 4px;
+            border-radius: 999px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        .train { background: var(--secondary); }
+        .test { background: var(--accent); }
+
+        .risk-list {
+            list-style: none;
+            padding: 0;
+            margin: 0.5em 0 0;
+        }
+
+        .risk-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .risk-icon {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 0.9em;
+            font-weight: 700;
+            background: rgba(10,77,140,0.08);
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .process {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .process .step {
+            background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(234,244,255,0.86));
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 15px 12px;
+            text-align: center;
+            box-shadow: 0 8px 18px rgba(10, 77, 140, 0.06);
+        }
+
+        .process .num {
+            display: inline-flex;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            margin-bottom: 10px;
+        }
+
+        .process p {
+            font-size: 0.6em;
+            margin: 0;
+            color: var(--text);
+        }
+
+        .bar-demo {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 18px;
+            height: 180px;
+            padding: 18px 18px 10px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(233,241,255,0.85));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-top: 18px;
+            box-shadow: var(--shadow);
+        }
+
+        .bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bar {
+            width: 58%;
+            border-radius: 10px 10px 0 0;
+            position: relative;
+        }
+
+        .bar::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.48em;
+            color: var(--muted);
+        }
+
+        .bar.a { background: linear-gradient(180deg, #7ec8ff, #1d9bf0); height: 62%; }
+        .bar.b { background: linear-gradient(180deg, #a4d9ff, #4aa5d9); height: 48%; }
+        .bar.c { background: linear-gradient(180deg, #ffd4a8, #f4b942); height: 31%; }
+        .bar.d { background: linear-gradient(180deg, #ffb8b8, #ff6b6b); height: 18%; }
+
+        .table-box {
+            background: rgba(255,255,255,0.82);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .table-box table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.66em;
+        }
+
+        .table-box th, .table-box td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eaeef5;
+            text-align: left;
+        }
+
+        .table-box th {
+            background: rgba(10,77,140,0.06);
+            color: var(--primary-deep);
+            font-weight: 700;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.52em;
+            font-weight: 700;
+            border: 1px solid transparent;
+        }
+
+        .pill.good {
+            background: rgba(39,174,96,0.12);
+            color: #1f8d4f;
+            border-color: rgba(39,174,96,0.2);
+        }
+
+        .pill.warn {
+            background: rgba(244,185,66,0.12);
+            color: #b87d00;
+            border-color: rgba(244,185,66,0.2);
+        }
+
+        .pill.bad {
+            background: rgba(255,107,107,0.12);
+            color: #d44949;
+            border-color: rgba(255,107,107,0.18);
+        }
+
+        .final-box {
+            background: linear-gradient(135deg, rgba(10,77,140,0.95), rgba(29,155,240,0.86));
+            border: none;
+            color: white;
+            border-radius: 22px;
+            padding: 26px 24px;
+            box-shadow: 0 24px 40px rgba(10,77,140,0.18);
+        }
+
+        .final-box h2, .final-box p, .final-box li {
+            color: white !important;
+        }
+
+        .final-box .chip {
+            display: inline-block;
+            background: rgba(255,255,255,0.14);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 999px;
+            padding: 6px 10px;
+            margin: 0 8px 8px 0;
+            font-size: 0.54em;
+        }
+
+        .footer-cta {
+            margin-top: 10px;
+            font-size: 0.7em;
+            color: white;
+            font-weight: 700;
+        }
+
+        .reveal .slides section[data-markdown-parsed=true] {
+            background: transparent;
+        }
     </style>
-  </head>
-  <body>
-    <header class="topbar">
-      <div class="container nav">
-        <div class="brand">
-          <div class="brand-mark">医</div>
-          <span>临床医学院·学习资料平台</span>
-        </div>
-        <nav class="nav-links">
-          <a href="#features">功能介绍</a>
-          <a href="#discover">发现</a>
-          <a href="#workspace">资料上传</a>
-          <a href="#analysis">智能整理</a>
-        </nav>
-        <button class="search-launch" id="searchLaunch" type="button" aria-label="搜索学习资料">
-          <span aria-hidden="true">⌕</span><span class="search-label">搜索资料或主题</span><kbd>/</kbd>
-        </button>
-        <a class="btn btn-primary" href="https://www.aycc.edu.cn/" target="_blank" rel="noopener noreferrer">进入官网</a>
-      </div>
-    </header>
-
-    <main>
-      <section class="hero">
-        <div class="container hero-shell">
-          <div>
-            <div class="eyebrow">高效学习 · 清晰整理 · 智能分析</div>
-            <h1>让学习资料更有序，知识更容易复盘。</h1>
-            <p class="subtitle">
-              面向临床医学学习场景，支持资料上传、自动分类、关键词提取和学习整理建议，帮助医学生快速梳理重点知识与学习结构。
-            </p>
-            <div class="cta-row">
-              <a class="btn btn-primary" href="#workspace">上传学习资料</a>
-              <a class="btn btn-secondary" href="https://www.aycc.edu.cn/" target="_blank" rel="noopener noreferrer">查看官网</a>
-            </div>
-            <div class="mini-stats">
-              <div class="mini-stat">
-                <strong>3x</strong>
-                <span>提升整理效率</span>
-              </div>
-              <div class="mini-stat">
-                <strong>24h</strong>
-                <span>随时随地整理</span>
-              </div>
-              <div class="mini-stat">
-                <strong>AI</strong>
-                <span>智能分析提炼</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="hero-panel">
-            <div class="panel-top">
-              <div class="dot-group">
-                <span class="dot red"></span>
-                <span class="dot yellow"></span>
-                <span class="dot green"></span>
-              </div>
-              <span class="tag">Learning Dashboard</span>
-            </div>
-            <div class="mock-window">
-              <div class="mock-item">
-                <div>
-                  <div style="font-weight:700; margin-bottom:6px;">病理学复习要点</div>
-                  <div style="color:#66768e; font-size:0.8rem;">关键词：炎症 / 组织 / 结局</div>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <section class="cover">
+                <div class="title-wrap">
+                    <div class="badge">AI × 医疗大数据</div>
+                    <h2>医疗大数据技术的</h2>
+                    <h1>过拟合问题</h1>
+                    <p class="subtitle">从“看起来很强”到“真正能治病”——浅析原因与解决路径</p>
+                    <p class="footer-note">演示模式：键盘左右键翻页 / 按 F 全屏</p>
                 </div>
-                <span class="tag">重点</span>
-              </div>
-              <div class="mock-item">
-                <div>
-                  <div style="font-weight:700; margin-bottom:6px;">临床技能实践记录</div>
-                  <div style="color:#66768e; font-size:0.8rem;">关键词：查体 / 诊断 / 治疗</div>
+            </section>
+
+            <section>
+                <h2>1. 先回答一个问题：什么是过拟合？</h2>
+                <div class="two-col">
+                    <div>
+                        <div class="quote">
+                            “模型学习到了训练数据里的‘偶然噪音’，而不是规律。<br>
+                            于是它在训练集上表现得非常好，却在真实病人群体上表现变差。”
+                        </div>
+                        <ul>
+                            <li>训练集表现：<span class="success">99%</span>，看起来非常优秀</li>
+                            <li>真实场景表现：<span class="highlight">50%</span>，甚至低于常识水平</li>
+                            <li>本质：把“样本特征中的巧合”当成“医学规律”</li>
+                        </ul>
+                    </div>
+                    <div class="chart-box">
+                        <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-label="拟合示意图">
+                            <defs>
+                                <linearGradient id="g1" x1="0" x2="1">
+                                    <stop offset="0%" stop-color="#1d9bf0"/>
+                                    <stop offset="100%" stop-color="#4db2ff"/>
+                                </linearGradient>
+                            </defs>
+                            <rect x="0" y="0" width="320" height="180" fill="#f7fbff"/>
+                            <path d="M30 140 C 70 120, 95 90, 120 80 S 180 55, 220 72 S 270 60, 290 40" stroke="#1d9bf0" stroke-width="4" fill="none"/>
+                            <path d="M30 140 L 30 25 M 30 140 L 290 140" stroke="#9bb4cc" stroke-width="1.5"/>
+                            <g fill="#ff6b6b">
+                                <circle cx="50" cy="126" r="4"/>
+                                <circle cx="86" cy="115" r="4"/>
+                                <circle cx="126" cy="101" r="4"/>
+                                <circle cx="152" cy="88" r="4"/>
+                                <circle cx="195" cy="70" r="4"/>
+                                <circle cx="230" cy="64" r="4"/>
+                                <circle cx="263" cy="55" r="4"/>
+                            </g>
+                            <path d="M30 140 L 50 126 L 86 115 L 126 101 L 152 88 L 195 70 L 230 64 L 263 55 L 290 40" stroke="#ff6b6b" stroke-width="2" fill="none" stroke-dasharray="6 5" opacity="0.9"/>
+                            <text x="118" y="170" font-size="12" fill="#66809b">数据点</text>
+                            <text x="176" y="32" font-size="12" fill="#ff6b6b">过拟合曲线</text>
+                        </svg>
+                    </div>
                 </div>
-                <span class="tag">待整理</span>
-              </div>
-              <div class="mock-item">
-                <div>
-                  <div style="font-weight:700; margin-bottom:6px;">药理学笔记</div>
-                  <div style="color:#66768e; font-size:0.8rem;">关键词：药物 / 机制 / 不良反应</div>
+            </section>
+
+            <section>
+                <h2>2. 为什么医疗数据容易“学偏”？</h2>
+                <div class="three-col">
+                    <div class="card">
+                        <span class="mini-tag">高维低样本</span>
+                        <p><strong>一个病人可能有数万维特征</strong>，但罕见病样本往往只有几十或几百例。</p>
+                        <p>模型很容易“找出训练集中极小差异”，但这些差异未必稳定。</p>
+                    </div>
+                    <div class="card">
+                        <span class="mini-tag">标签噪声</span>
+                        <p><strong>病历记录、随访缺失、人工判读误差</strong>都会导致标签偏差。</p>
+                        <p>AI 可能把病历中“笔误”误学成强规则。</p>
+                    </div>
+                    <div class="card">
+                        <span class="mini-tag">多中心差异</span>
+                        <p><strong>不同医院设备、拍片参数、人口结构不同</strong>，导致模型记住“医院风格”而不是“病理规律”。</p>
+                    </div>
                 </div>
-                <span class="tag">已归档</span>
-              </div>
-            </div>
-          </div>
+            </section>
+
+            <section>
+                <h2>3. 过拟合的典型“症状”</h2>
+                <div class="two-col">
+                    <div class="chart-box">
+                        <div class="curve-wrap">
+                            <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="0" y="0" width="400" height="220" fill="#f7fbff"/>
+                                <g stroke="#b4c6d9" stroke-width="1" fill="none">
+                                    <path d="M40 180 H360 M40 180 V30"/>
+                                    <path d="M40 150 H360 M40 120 H360 M40 90 H360 M40 60 H360"/>
+                                </g>
+                                <path d="M40 170 C80 150, 110 120, 150 95 S 230 72, 260 70 S 320 52, 360 40" fill="none" stroke="#1d9bf0" stroke-width="4"/>
+                                <path d="M40 170 C90 160, 120 150, 150 120 S 220 90, 260 110 S 320 130, 360 145" fill="none" stroke="#ff6b6b" stroke-width="4"/>
+                                <g fill="#1d9bf0" font-size="12">
+                                    <text x="44" y="195">0</text>
+                                    <text x="135" y="195">训练轮数</text>
+                                </g>
+                                <g fill="#1d9bf0" font-size="12">
+                                    <text x="18" y="60" transform="rotate(-90 18 60)">误差</text>
+                                </g>
+                                <g fill="#ff6b6b" font-size="12">
+                                    <text x="290" y="155">验证误差上升</text>
+                                </g>
+                            </svg>
+                        </div>
+                        <div class="legend">
+                            <span><i class="train"></i>训练误差</span>
+                            <span><i class="test"></i>验证误差</span>
+                        </div>
+                    </div>
+                    <div class="risk-list">
+                        <li><span class="risk-icon">1</span><div><strong>训练准确率很高</strong>，但临床落地效果差</div></li>
+                        <li><span class="risk-icon">2</span><div><strong>模型对噪声过度敏感</strong>，微小病历差异被误判</div></li>
+                        <li><span class="risk-icon">3</span><div><strong>跨医院迁移能力差</strong>，一院模型换另一院就失效</div></li>
+                        <li><span class="risk-icon">4</span><div><strong>对罕见病例表现不稳定</strong>，最危险的时候恰恰是‘少样本’场景</div></li>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>4. 一个简单例子：为什么“穿红衣服”会误导模型？</h2>
+                <div class="card">
+                    <p>把训练样本理解成“发烧+咳嗽+<span class="highlight">穿红衣服</span> = 感冒”时，模型会寻找“红衣服”这个看起来强相关但其实无效的模式。</p>
+                    <div class="two-col">
+                        <div class="box" style="background:#f8fbff;border-radius:14px;border:1px solid var(--border);padding:14px 16px;">
+                            <p><strong>训练集</strong></p>
+                            <ul>
+                                <li>发烧 + 咳嗽 + 穿红衣服 → 感冒</li>
+                                <li>发烧 + 咳嗽 + 穿红衣服 → 感冒</li>
+                                <li>发烧 + 咳嗽 + 穿红衣服 → 感冒</li>
+                            </ul>
+                        </div>
+                        <div class="box" style="background:#fff6f6;border-radius:14px;border:1px solid rgba(255,107,107,0.15);padding:14px 16px;">
+                            <p><strong>真实场景</strong></p>
+                            <ul>
+                                <li>发烧 + 咳嗽 + 穿蓝衣服 → 也可能是感冒</li>
+                                <li>但模型因为“红衣服”被学死了</li>
+                                <li>结果：<span class="highlight">识别失败</span>，归因错误</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>5. 解决方案概览：四把“防过拟合”的利器</h2>
+                <div class="process">
+                    <div class="step">
+                        <div class="num">1</div>
+                        <p><strong>正则化</strong><br>让模型不要过度自信</p>
+                    </div>
+                    <div class="step">
+                        <div class="num">2</div>
+                        <p><strong>Dropout</strong><br>随机休息，减少依赖单一特征</p>
+                    </div>
+                    <div class="step">
+                        <div class="num">3</div>
+                        <p><strong>数据增强</strong><br>变形训练，增强泛化</p>
+                    </div>
+                    <div class="step">
+                        <div class="num">4</div>
+                        <p><strong>交叉验证</strong><br>看它是否“真会”</p>
+                    </div>
+                    <div class="step">
+                        <div class="num">5</div>
+                        <p><strong>外部验证</strong><br>跨医院真实考核</p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>6. 正则化：让模型“只抓关键特征”</h2>
+                <div class="two-col">
+                    <div>
+                        <p>正则化的核心思想：<strong>给复杂模型“纪律”</strong>，不要让权重无限变大。</p>
+                        <ul>
+                            <li><strong>L1/Lasso</strong>：自动压缩不重要特征，适合高维稀疏医疗数据</li>
+                            <li><strong>L2/Ridge</strong>：惩罚大权重，避免“学得过猛”</li>
+                            <li><strong>Elastic Net</strong>：兼顾L1/L2，平衡稳定性和稀疏性</li>
+                        </ul>
+                    </div>
+                    <div class="table-box">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>方法</th>
+                                    <th>作用</th>
+                                    <th>适用场景</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>L1</td>
+                                    <td>特征选择</td>
+                                    <td>基因/临床指标筛选</td>
+                                </tr>
+                                <tr>
+                                    <td>L2</td>
+                                    <td>稳定权重</td>
+                                    <td>回归/神经网络</td>
+                                </tr>
+                                <tr>
+                                    <td>Elastic Net</td>
+                                    <td>兼顾稀疏与稳定</td>
+                                    <td>医学高维数据</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>7. Dropout 与 Early Stopping：让模型不要“背答案”</h2>
+                <div class="two-col">
+                    <div class="card">
+                        <p><span class="mini-tag">Dropout</span>在训练时随机“关闭”部分神经元，防止模型对单个特征过度依赖。</p>
+                        <p><span class="mini-tag">Early Stopping</span>在验证集误差开始上升时提前停止训练，防止模型继续“记住噪声”。</p>
+                    </div>
+                    <div class="bar-demo">
+                        <div class="bar-group">
+                            <div class="bar a" data-label="训练期"></div>
+                            <div class="bar b" data-label="稳定期"></div>
+                        </div>
+                        <div class="bar-group">
+                            <div class="bar c" data-label="继续学"></div>
+                            <div class="bar d" data-label="提前停"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>8. 数据增强：让模型“见得更多，不靠原题”</h2>
+                <div class="three-col">
+                    <div class="card">
+                        <p><strong>影像增强</strong></p>
+                        <ul>
+                            <li>旋转、翻转、裁剪</li>
+                            <li>亮度和对比度调节</li>
+                            <li>加入轻度噪声</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <p><strong>文本增强</strong></p>
+                        <ul>
+                            <li>同义词替换</li>
+                            <li>回译/语序变换</li>
+                            <li>病历字段扰动</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <p><strong>核心价值</strong></p>
+                        <ul>
+                            <li>减少样本偏差</li>
+                            <li>提升泛化能力</li>
+                            <li>让模型更像“学习规律”而不是“背答案”</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>9. 集成学习与交叉验证：让结论更可靠</h2>
+                <div class="two-col">
+                    <div>
+                        <ul>
+                            <li><strong>集成学习</strong>：训练多个模型，最终投票或加权融合，减少单模型偶然错误</li>
+                            <li><strong>5折交叉验证</strong>：轮流用4份训练、1份验证，避免“碰巧好看”</li>
+                            <li><strong>外部验证</strong>：使用不同医院、不同设备的数据进行评估</li>
+                        </ul>
+                    </div>
+                    <div class="table-box">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>评估方式</th>
+                                    <th>目的</th>
+                                    <th>价值</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>内部验证</td>
+                                    <td>调参/筛选模型</td>
+                                    <td>快速迭代</td>
+                                </tr>
+                                <tr>
+                                    <td>交叉验证</td>
+                                    <td>评估稳定性</td>
+                                    <td>降低偶然误判</td>
+                                </tr>
+                                <tr>
+                                    <td>外部验证</td>
+                                    <td>真实部署能力</td>
+                                    <td>更接近临床落地</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>10. 归根结底：医疗AI要避免“死记硬背式判断”</h2>
+                <div class="final-box">
+                    <p class="chip">高维数据</p>
+                    <p class="chip">噪声标签</p>
+                    <p class="chip">多中心差异</p>
+                    <p class="chip">样本不足</p>
+                    <ul>
+                        <li>过拟合不是“模型表现好”，而是“模型对训练集过度贴合”</li>
+                        <li>医疗AI的核心目标不是让它在训练集上看起来很聪明，而是让它<em>在真实患者群体中更稳、更准</em></li>
+                        <li>真正优质的模型，应该是<em>能解释、能泛化、能跨场景</em>的模型</li>
+                    </ul>
+                    <div class="footer-cta">👉 最终目标：让 AI 成为可靠的辅助诊断工具，而不是“记住了练习题答案的‘假医生’”</div>
+                </div>
+            </section>
+
+            <section class="center">
+                <h2>谢谢观看</h2>
+                <p>Q & A</p>
+            </section>
         </div>
-      </section>
+    </div>
 
-      <section class="search-section" id="search">
-        <div class="container">
-          <form class="search-box" id="siteSearchForm" role="search">
-            <span class="search-icon" aria-hidden="true">🔎</span>
-            <input id="siteSearchInput" type="search" autocomplete="off" placeholder="搜索学习资料、学科主题或临床技能" aria-label="搜索学习资料、学科主题或临床技能" />
-            <button class="btn btn-primary" type="submit">搜索</button>
-          </form>
-          <div class="search-results" id="searchResults" aria-live="polite">
-            <h3 id="searchResultHeading">搜索结果</h3>
-            <div class="search-result-list" id="searchResultList"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="features">
-        <div class="container">
-          <div class="cards">
-            <article class="card">
-              <div class="icon-box">📤</div>
-              <h3>资料上传</h3>
-              <p>支持文字、笔记、课程资料等文件上传，支持拖拽导入和多文件批量处理。</p>
-            </article>
-            <article class="card">
-              <div class="icon-box">🔍</div>
-              <h3>智能分析</h3>
-              <p>自动统计字数、词频、关键词和学习重点，以便快速判断资料的重点和结构层次。</p>
-            </article>
-            <article class="card">
-              <div class="icon-box">🧠</div>
-              <h3>学习整理</h3>
-              <p>根据学科方向生成分类建议、整理方案和复习建议，助力高效复盘和知识沉淀。</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="discover">
-        <div class="container">
-          <div class="discover-hero">
-            <div>
-              <div class="eyebrow">发现好内容 · 构建知识地图</div>
-              <h2 style="margin-top:14px;">学习发现</h2>
-              <p>按学科、技能与学习阶段探索主题指南；上传资料后，也可以通过顶部搜索快速定位个人资料。</p>
-            </div>
-            <div class="discover-count" id="discoverCount">精选主题</div>
-          </div>
-          <div class="discover-filters" id="discoverFilters" aria-label="发现内容分类"></div>
-          <div class="discover-grid" id="discoverGrid"></div>
-        </div>
-      </section>
-
-      <section class="section" id="workspace">
-        <div class="container workspace">
-          <div class="panel">
-            <h2>上传学习资料</h2>
-            <div id="uploadArea" class="upload-area" tabindex="0">
-              <div class="upload-icon">📁</div>
-              <div style="font-size:1.12rem; font-weight:700; margin-bottom:6px;">拖拽文件到此处</div>
-              <div class="upload-text">支持 .txt / .md / .csv / .json / .pdf 等文本资料<br />点击选择文件即可上传</div>
-            </div>
-            <input id="fileInput" class="file-input" type="file" multiple accept=".txt,.md,.csv,.json,.pdf" />
-            <div class="file-meta">
-              已上传：<span id="fileCount">0</span> 个文件
-            </div>
-            <div id="fileList" class="file-list"></div>
-          </div>
-
-          <div class="panel" id="analysis">
-            <h2>学习资料分析与整理</h2>
-            <div class="analysis-grid">
-              <div class="stat-box">
-                <small>文件数</small>
-                <strong id="statFiles">0</strong>
-              </div>
-              <div class="stat-box">
-                <small>总字数</small>
-                <strong id="statWords">0</strong>
-              </div>
-              <div class="stat-box">
-                <small>词频</small>
-                <strong id="statUnique">0</strong>
-              </div>
-              <div class="stat-box">
-                <small>重点主题</small>
-                <strong id="statThemes">0</strong>
-              </div>
-            </div>
-
-            <div style="margin-top:18px;">
-              <div style="font-weight:800; margin-bottom:10px;">关键词提取</div>
-              <div id="keywordCloud" class="keywords-wrap"></div>
-            </div>
-
-            <div style="margin-top:22px;">
-              <div style="font-weight:800; margin-bottom:10px;">整理建议</div>
-              <div id="suggestionList" class="suggestion-list"></div>
-            </div>
-
-            <div class="summary-box">
-              <div style="font-weight:800; margin-bottom:12px;">资料摘要</div>
-              <pre id="summaryText">暂无数据，先上传学习资料后查看分析结果。</pre>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
     <script>
-      const fileInput = document.getElementById('fileInput');
-      const uploadArea = document.getElementById('uploadArea');
-      const fileList = document.getElementById('fileList');
-      const fileCount = document.getElementById('fileCount');
-      const keywordCloud = document.getElementById('keywordCloud');
-      const suggestionList = document.getElementById('suggestionList');
-      const summaryText = document.getElementById('summaryText');
-      const statFiles = document.getElementById('statFiles');
-      const statWords = document.getElementById('statWords');
-      const statUnique = document.getElementById('statUnique');
-      const statThemes = document.getElementById('statThemes');
-      const siteSearchInput = document.getElementById('siteSearchInput');
-      const searchResults = document.getElementById('searchResults');
-      const searchResultHeading = document.getElementById('searchResultHeading');
-      const searchResultList = document.getElementById('searchResultList');
-      const discoverGrid = document.getElementById('discoverGrid');
-      const discoverFilters = document.getElementById('discoverFilters');
-      const discoverCount = document.getElementById('discoverCount');
-      const uploadedRecords = [];
-      let activeCategory = '全部';
-      let searchQuery = '';
-
-      const MEDICAL_TAGS = [
-        '病理', '药理', '解剖', '诊断', '影像', '病历', '病例', '手术', '治疗',
-        '护理', '检验', '护理', '内科', '外科', '儿科', '妇产', '药物', '查体',
-        '机体', '机制', '临床', '实验', '基础', '病例分析', '病程'
-      ];
-
-      const DISCOVERY_CATEGORIES = ['全部', '基础医学', '临床技能', '病例训练', '考前复习'];
-      const DISCOVERY_ITEMS = [
-        {
-          id: 'anatomy-map', title: '人体解剖知识地图', category: '基础医学', icon: '🫀', color: 'blue',
-          description: '按系统梳理器官结构、毗邻关系与重要体表标志。',
-          tags: ['解剖', '系统学习', '结构记忆'],
-          detail: '建议采用“整体系统—局部结构—临床关联”三级笔记，并用图示标注血管、神经与器官的空间关系。'
-        },
-        {
-          id: 'pathology-core', title: '病理学核心概念', category: '基础医学', icon: '🧬', color: 'purple',
-          description: '围绕病因、发病机制、形态变化和结局建立知识链。',
-          tags: ['病理', '机制', '重点概念'],
-          detail: '复习时可将每种疾病整理为“病因与机制—大体和镜下改变—临床表现—结局”四栏，强化因果联系。'
-        },
-        {
-          id: 'pharmacology-review', title: '药理学分类速记', category: '考前复习', icon: '💊', color: 'green',
-          description: '对照药物类别、作用机制、适应证与不良反应。',
-          tags: ['药理', '药物', '考前复习'],
-          detail: '按系统建立药物对照表，重点比较同类药物的作用差异、禁忌证和典型不良反应。'
-        },
-        {
-          id: 'physical-exam', title: '临床查体训练清单', category: '临床技能', icon: '🩺', color: 'teal',
-          description: '把问诊、查体步骤和阳性体征记录成可复用清单。',
-          tags: ['查体', '临床技能', '诊断'],
-          detail: '每项技能按“准备—操作—观察—记录—解释”复盘；练习时核对规范顺序、患者沟通和无菌意识。'
-        },
-        {
-          id: 'case-reasoning', title: '典型病例推理练习', category: '病例训练', icon: '🧩', color: 'orange',
-          description: '从主诉和病史出发，逐步整理鉴别诊断与检查依据。',
-          tags: ['病例分析', '诊断', '临床思维'],
-          detail: '先提炼问题表征，再列出支持与反对证据；选择检查时写明其要验证的假设，避免只罗列检查项目。'
-        },
-        {
-          id: 'imaging-basics', title: '医学影像入门', category: '临床技能', icon: '🩻', color: 'pink',
-          description: '建立影像判读顺序，练习从定位到描述的规范表达。',
-          tags: ['影像', '临床技能', '检查'],
-          detail: '按照“检查方式—解剖定位—影像特征—可能意义”描述所见；影像结论应结合病史与其他检查综合判断。'
-        },
-        {
-          id: 'nursing-rounds', title: '护理评估与病程记录', category: '临床技能', icon: '📋', color: 'green',
-          description: '归纳常见评估要点、病情观察和记录结构。',
-          tags: ['护理', '病程', '记录'],
-          detail: '记录应客观、及时、可追溯；可按评估发现、采取措施、患者反应和后续计划整理学习笔记。'
-        },
-        {
-          id: 'exam-plan', title: '一周考前复习计划', category: '考前复习', icon: '📅', color: 'purple',
-          description: '将知识回顾、错题整理和间隔复习安排到每日任务。',
-          tags: ['复习计划', '错题', '记忆'],
-          detail: '每天安排一段主动回忆、一段错题复盘和一次短时回顾；依据掌握程度调整计划，避免只重复阅读。'
-        },
-        {
-          id: 'lab-tests', title: '常见检验指标梳理', category: '病例训练', icon: '🧪', color: 'orange',
-          description: '关联检验项目、临床意义、影响因素与解释边界。',
-          tags: ['检验', '诊断', '临床'],
-          detail: '按系统整理指标的参考范围与临床解释，并记录可能的干扰因素；单项异常不能脱离临床背景直接下结论。'
-        }
-      ];
-
-      function matchesQuery(value, query) {
-        return String(value || '').toLocaleLowerCase().includes(query.toLocaleLowerCase());
-      }
-
-      function renderDiscoveryFilters() {
-        discoverFilters.replaceChildren();
-        DISCOVERY_CATEGORIES.forEach(category => {
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.className = `filter-chip${category === activeCategory ? ' active' : ''}`;
-          button.textContent = category;
-          button.setAttribute('aria-pressed', String(category === activeCategory));
-          button.addEventListener('click', () => {
-            activeCategory = category;
-            renderDiscoveryFilters();
-            renderDiscoveryCards();
-          });
-          discoverFilters.append(button);
+        Reveal.initialize({
+            hash: true,
+            slideNumber: true,
+            transition: 'slide',
+            controls: true,
+            progress: true,
+            center: false,
+            width: 1200,
+            height: 700
         });
-      }
-
-      function renderDiscoveryCards() {
-        const items = DISCOVERY_ITEMS.filter(item => {
-          const inCategory = activeCategory === '全部' || item.category === activeCategory;
-          const searchable = [item.title, item.category, item.description, item.tags.join(' '), item.detail].join(' ');
-          return inCategory && (!searchQuery || matchesQuery(searchable, searchQuery));
-        });
-        discoverCount.textContent = `显示 ${items.length} 个主题`;
-        discoverGrid.replaceChildren();
-
-        if (!items.length) {
-          const empty = document.createElement('div');
-          empty.className = 'discover-empty';
-          empty.textContent = searchQuery ? `没有找到与“${searchQuery}”匹配的发现内容，试试其他关键词。` : '该分类暂时没有内容。';
-          discoverGrid.append(empty);
-          return;
-        }
-
-        items.forEach(item => {
-          const card = document.createElement('article');
-          card.className = 'discover-card';
-          card.id = `discover-${item.id}`;
-
-          const cover = document.createElement('div');
-          cover.className = `discover-cover ${item.color}`;
-          cover.setAttribute('aria-hidden', 'true');
-          cover.textContent = item.icon;
-
-          const content = document.createElement('div');
-          content.className = 'discover-content';
-          const category = document.createElement('div');
-          category.className = 'discover-category';
-          category.textContent = item.category;
-          const title = document.createElement('h3');
-          title.textContent = item.title;
-          const description = document.createElement('p');
-          description.textContent = item.description;
-          const tags = document.createElement('div');
-          tags.className = 'discover-tags';
-          item.tags.forEach(tagText => {
-            const tag = document.createElement('span');
-            tag.className = 'discover-tag';
-            tag.textContent = tagText;
-            tags.append(tag);
-          });
-          const detail = document.createElement('p');
-          detail.className = 'discover-detail';
-          detail.hidden = true;
-          detail.textContent = item.detail;
-          const action = document.createElement('button');
-          action.className = 'btn btn-secondary';
-          action.type = 'button';
-          action.textContent = '查看学习建议';
-          action.setAttribute('aria-expanded', 'false');
-          action.addEventListener('click', () => {
-            detail.hidden = !detail.hidden;
-            action.setAttribute('aria-expanded', String(!detail.hidden));
-            action.textContent = detail.hidden ? '查看学习建议' : '收起学习建议';
-          });
-
-          content.append(category, title, description, tags, detail, action);
-          card.append(cover, content);
-          discoverGrid.append(card);
-        });
-      }
-
-      function renderSearchResults() {
-        const query = searchQuery.trim();
-        if (!query) {
-          searchResults.classList.remove('visible');
-          searchResultList.replaceChildren();
-          return;
-        }
-
-        const results = [];
-        DISCOVERY_ITEMS.forEach(item => {
-          const searchable = [item.title, item.category, item.description, item.tags.join(' '), item.detail].join(' ');
-          if (matchesQuery(searchable, query)) {
-            results.push({ title: item.title, type: '发现主题', target: `discover-${item.id}`, kind: 'discovery' });
-          }
-        });
-        uploadedRecords.forEach((record, index) => {
-          if (matchesQuery(`${record.file.name} ${record.text}`, query)) {
-            results.push({ title: record.file.name, type: '我的资料', target: `uploaded-file-${index}`, kind: 'file' });
-          }
-        });
-
-        searchResultHeading.textContent = `“${query}”的搜索结果（${results.length}）`;
-        searchResultList.replaceChildren();
-        if (!results.length) {
-          const empty = document.createElement('div');
-          empty.className = 'discover-empty';
-          empty.textContent = '暂未找到匹配内容。可尝试“病理”“药理”“查体”等关键词。';
-          searchResultList.append(empty);
-        } else {
-          results.slice(0, 12).forEach(result => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'search-result';
-            const title = document.createElement('span');
-            title.textContent = result.title;
-            const type = document.createElement('span');
-            type.className = 'result-type';
-            type.textContent = result.type;
-            button.append(title, type);
-            button.addEventListener('click', () => {
-              if (result.kind === 'discovery') {
-                activeCategory = '全部';
-                renderDiscoveryFilters();
-                renderDiscoveryCards();
-              }
-              document.getElementById(result.target)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              const target = document.getElementById(result.target);
-              if (target) {
-                target.animate([{ boxShadow: '0 0 0 0 rgba(29,122,242,0)' }, { boxShadow: '0 0 0 5px rgba(29,122,242,0.24)' }, { boxShadow: '0 0 0 0 rgba(29,122,242,0)' }], { duration: 1000 });
-              }
-            });
-            searchResultList.append(button);
-          });
-        }
-        searchResults.classList.add('visible');
-      }
-
-      function runSearch(value = siteSearchInput.value) {
-        searchQuery = value.trim();
-        siteSearchInput.value = value;
-        activeCategory = '全部';
-        renderDiscoveryFilters();
-        renderDiscoveryCards();
-        renderFileList(uploadedRecords);
-        renderSearchResults();
-      }
-
-      function parseTextContent(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = typeof reader.result === 'string' ? reader.result : '';
-            resolve({ file, content: result });
-          };
-          reader.onerror = () => reject(new Error('读取文件失败'));
-
-          if (file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf')) {
-            const url = URL.createObjectURL(file);
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
-            script.type = 'module';
-            script.onload = async () => {
-              try {
-                const pdfjsLib = window.pdfjsLib || await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
-                const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
-                let text = '';
-                for (let i = 1; i <= pdf.numPages; i++) {
-                  const page = await pdf.getPage(i);
-                  const pageText = await page.getTextContent();
-                  text += pageText.items.map(item => item.str).join(' ') + '\n';
-                }
-                resolve({ file, content: text });
-              } catch (error) {
-                resolve({ file, content: '[PDF解析失败：当前浏览器未加载PDF解析库或文件非标准文本PDF]' });
-              }
-            };
-            script.onerror = () => resolve({ file, content: '[PDF解析失败：当前浏览器未加载PDF解析库]' });
-            document.head.appendChild(script);
-            return;
-          }
-
-          reader.readAsText(file, 'utf-8');
-        });
-      }
-
-      function extractKeywords(text) {
-        const matches = new Map();
-        MEDICAL_TAGS.forEach(tag => {
-          const regex = new RegExp(tag, 'gi');
-          const count = (text.match(regex) || []).length;
-          if (count > 0) matches.set(tag, count);
-        });
-        return [...matches.entries()]
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 8);
-      }
-
-      function computeSummary(files) {
-        const summaries = files.map(item => {
-          const clean = item.text
-            .replace(/\s+/g, ' ')
-            .replace(/[\u200B-\u200D\uFEFF]/g, '')
-            .trim();
-          const hint = clean.length > 0 ? clean.slice(0, 220) : '暂无内容';
-          const keywords = extractKeywords(clean);
-          const theme = keywords[0]?.[0] || '综合学习';
-          return { ...item, clean, keywords, theme, hint };
-        });
-
-        const totalWords = summaries.reduce((sum, item) => sum + item.clean.split(/\s+/).filter(Boolean).length, 0);
-        const uniqueWords = new Set(summaries.flatMap(item => item.clean.match(/[\u4e00-\u9fa5a-zA-Z0-9]+/g) || [])).size;
-        const themes = new Set(summaries.map(item => item.theme));
-
-        const summary = summaries.map((item, idx) => {
-          const topic = item.keywords.length ? item.keywords.map(([k]) => k).slice(0, 3).join('、') : '综合学习';
-          return `【${idx + 1}】${item.file.name}\n主题：${topic}\n整理建议：按“${item.theme}”方向梳理重点；建议将正文分为基础知识、典型病例、复习要点三部分。\n摘要：${item.hint}...\n`;
-        }).join('\n');
-
-        return {
-          totalWords,
-          uniqueWords,
-          themeCount: themes.size,
-          summary,
-          summaries
-        };
-      }
-
-      function renderSuggestions(summaries) {
-        suggestionList.replaceChildren();
-        if (!summaries.length) {
-          const empty = document.createElement('div');
-          empty.className = 'suggestion';
-          empty.textContent = '暂无整理建议，请先上传学习资料。';
-          suggestionList.append(empty);
-          return;
-        }
-
-        summaries.forEach((item, idx) => {
-          const keywordText = item.keywords.length ? item.keywords.map(([k, v]) => `${k}(${v})`).join(' · ') : '综合复习';
-          const suggestion = document.createElement('div');
-          suggestion.className = 'suggestion';
-          const title = document.createElement('strong');
-          title.textContent = `${idx + 1}. ${item.file.name}`;
-          const text = document.createElement('span');
-          text.textContent = `关键内容：${keywordText}；建议按“基础概念 → 重点病症 → 复习要点”三层结构进行整理，便于临床记忆和考前速查。`;
-          suggestion.append(title, document.createElement('br'), text);
-          suggestionList.append(suggestion);
-        });
-      }
-
-      function renderKeywords(summaries) {
-        const allKeywords = summaries.flatMap(item => item.keywords);
-        const map = new Map();
-        allKeywords.forEach(([key, count]) => map.set(key, (map.get(key) || 0) + count));
-        const topKeywords = [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
-
-        keywordCloud.innerHTML = topKeywords.length
-          ? topKeywords.map(([key, count]) => `<span class="keyword">${key} × ${count}</span>`).join('')
-          : '<span class="keyword">等待上传资料</span>';
-      }
-
-      function renderFileList(files) {
-        fileList.replaceChildren();
-        if (!files.length) {
-          const empty = document.createElement('div');
-          empty.className = 'file-item';
-          empty.textContent = '暂无上传文件';
-          fileList.append(empty);
-          return;
-        }
-
-        const query = searchQuery.toLocaleLowerCase();
-        let shown = 0;
-        files.forEach((record, index) => {
-          const file = record.file;
-          if (query && !matchesQuery(`${file.name} ${record.text}`, query)) return;
-          shown += 1;
-          const item = document.createElement('div');
-          item.className = 'file-item';
-          item.id = `uploaded-file-${index}`;
-          const details = document.createElement('div');
-          const name = document.createElement('div');
-          name.className = 'file-name';
-          name.textContent = file.name;
-          const type = document.createElement('div');
-          type.className = 'file-type';
-          type.textContent = `${file.type || '未知类型'} • ${(file.size / 1024).toFixed(1)} KB`;
-          details.append(name, type);
-          const actions = document.createElement('div');
-          actions.className = 'file-actions';
-          const status = document.createElement('span');
-          status.className = 'chip good';
-          status.textContent = '已分析';
-          actions.append(status);
-          item.append(details, actions);
-          fileList.append(item);
-        });
-
-        if (!shown) {
-          const empty = document.createElement('div');
-          empty.className = 'file-item';
-          empty.textContent = `没有找到包含“${searchQuery}”的已上传资料。`;
-          fileList.append(empty);
-        }
-      }
-
-      async function handleFiles(fileListInput) {
-        const files = Array.from(fileListInput);
-        if (!files.length) return;
-
-        const parsed = await Promise.all(files.map(parseTextContent));
-        parsed.forEach(({ file, content }) => {
-          const duplicate = uploadedRecords.some(record =>
-            record.file.name === file.name &&
-            record.file.size === file.size &&
-            record.file.lastModified === file.lastModified
-          );
-          if (!duplicate) uploadedRecords.push({ file, text: content, keywords: extractKeywords(content) });
-        });
-        const metrics = computeSummary(uploadedRecords);
-
-        renderFileList(uploadedRecords);
-        renderKeywords(metrics.summaries);
-        renderSuggestions(metrics.summaries);
-        summaryText.textContent = metrics.summary || '暂无内容';
-
-        fileCount.textContent = String(uploadedRecords.length);
-        statFiles.textContent = String(uploadedRecords.length);
-        statWords.textContent = String(metrics.totalWords);
-        statUnique.textContent = String(metrics.uniqueWords);
-        statThemes.textContent = String(metrics.themeCount);
-        renderSearchResults();
-      }
-
-      uploadArea.addEventListener('click', () => fileInput.click());
-      uploadArea.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          fileInput.click();
-        }
-      });
-
-      ['dragenter', 'dragover'].forEach(type => {
-        uploadArea.addEventListener(type, (event) => {
-          event.preventDefault();
-          uploadArea.classList.add('dragover');
-        });
-      });
-
-      ['dragleave', 'drop'].forEach(type => {
-        uploadArea.addEventListener(type, (event) => {
-          event.preventDefault();
-          uploadArea.classList.remove('dragover');
-        });
-      });
-
-      uploadArea.addEventListener('drop', (event) => {
-        const files = event.dataTransfer.files;
-        if (files && files.length) {
-          handleFiles(files);
-        }
-      });
-
-      fileInput.addEventListener('change', (event) => {
-        handleFiles(event.target.files);
-        fileInput.value = '';
-      });
-
-      document.getElementById('siteSearchForm').addEventListener('submit', (event) => {
-        event.preventDefault();
-        runSearch();
-      });
-
-      siteSearchInput.addEventListener('input', () => runSearch());
-
-      document.getElementById('searchLaunch').addEventListener('click', () => {
-        document.getElementById('search').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        siteSearchInput.focus({ preventScroll: true });
-      });
-
-      document.addEventListener('keydown', (event) => {
-        const target = event.target;
-        const isTyping = target instanceof HTMLElement &&
-          (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
-        if (event.key === '/' && !isTyping) {
-          event.preventDefault();
-          document.getElementById('search').scrollIntoView({ behavior: 'smooth', block: 'center' });
-          siteSearchInput.focus({ preventScroll: true });
-        }
-        if (event.key === 'Escape' && document.activeElement === siteSearchInput) {
-          siteSearchInput.value = '';
-          runSearch('');
-          siteSearchInput.blur();
-        }
-      });
-
-      renderDiscoveryFilters();
-      renderDiscoveryCards();
     </script>
-  </body>
+</body>
 </html>
